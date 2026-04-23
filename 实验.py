@@ -3,7 +3,7 @@ import random
 import copy
 import matplotlib.pyplot as plt
 
-# ================= 1. 全局数据定义 =================
+#locations
 locations = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 A_only_uav = list(range(1, 6))  # UAV Only: 1, 2, 3
 S_only_usv = list(range(6, 8))  # USV Only: 4, 5, 6, 7
@@ -11,7 +11,7 @@ B_both = list(range(8, 12))  # Both: 8, 9, 10, 11
 depot = 0
 customers = A_only_uav + S_only_usv + B_both
 
-# 车辆定义
+# vehicles
 drones = [0, 1, 2]  # 3 UAVs
 usv = [0, 1]  # 3 USVs
 
@@ -37,7 +37,7 @@ service_time = {
     8: 20, 9: 5, 10: 30, 11: 15
 }
 
-# 预计算行驶时间矩阵
+# travel time
 travel_time_d = {}
 travel_time_k = {}
 
@@ -54,7 +54,9 @@ for i in locations:
             travel_time_k[(i, j)] = dist / usv_speed
 
 
-# ================= 2. 核心辅助函数 =================
+
+
+#functions
 
 def get_travel_time(from_node, to_node, vehicle_type):
     """获取行驶时间"""
@@ -112,8 +114,7 @@ def check_feasibility(route, vehicle_type):
         # 服务时间
         current_time += service_time.get(to_node, 0)
 
-        # UAV 续航检查 (仅在回到仓库或中间检查? 通常指总飞行时间不超过限制)
-        # 这里假设 flying_duration 是单次任务的最大持续时间
+
         if vehicle_type.startswith('uav'):
             # 简单起见，检查从出发到当前的时间是否超过续航
             # 更严格的应该是累加飞行时间，但通常 VRPTW 中是指回到仓库的总时间
@@ -127,7 +128,7 @@ def check_feasibility(route, vehicle_type):
     return True
 
 
-# ================= 3. ALNS 算子 =================
+#ALNS
 
 def initial_solution(drones, usv):
     """
@@ -222,10 +223,7 @@ def destroy(routes, num_remove=2):
     random.shuffle(all_nodes_in_routes)
     selected = all_nodes_in_routes[:num_remove]
 
-    # 按索引降序排序，防止移除前面的元素影响后面元素的索引
-    # 注意：不同车辆的索引互不影响，同车辆的才影响。
-    # 简单做法：逐个移除，但需要重新获取索引，或者按车辆分组处理。
-    # 这里采用更稳健的方法：先记录要移除的节点值，然后从副本中移除
+     #先记录要移除的节点值，然后从副本中移除
 
     nodes_to_remove_vals = [new_routes[v][i] for v, i in selected]
 
@@ -283,10 +281,6 @@ def repair(routes, removed_nodes):
             rt = temp_routes[best_insert_v]
             temp_routes[best_insert_v] = rt[:best_insert_idx] + [node] + rt[best_insert_idx:]
         else:
-            # 如果实在找不到合法位置，为了保持解的完整性，强行插入到最短路径
-            # 但这会导致解不可行。在严格模式下，我们应该保留原状或报错。
-            # 这里为了程序不崩，选择跳过该节点（这会导致节点丢失，但在ALNS中通常会通过多次迭代找回）
-            # 更好的做法：允许轻微违反，这里暂不实现复杂惩罚函数
             pass
 
     return temp_routes
@@ -337,7 +331,7 @@ def alns(drones, usv, max_iter=5000):
     return best_solution, best_cost
 
 
-# ================= 4. 结果展示与绘图 =================
+# present result
 
 def plot_results(best_routes):
     plt.figure(figsize=(12, 9))
